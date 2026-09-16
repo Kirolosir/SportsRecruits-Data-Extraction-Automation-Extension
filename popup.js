@@ -2,6 +2,13 @@
 // here, then clears everything once it's saved.
 
 const $ = (id) => document.getElementById(id);
+
+// Theme. The <head> script already applied the saved choice; this just keeps
+// the button in sync and remembers what you picked.
+function setTheme(dark) {
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  try { localStorage.setItem("sr_theme", dark ? "dark" : "light"); } catch (e) {}
+}
 // localhost is the test server in test-harness/. Take it out of here and out
 // of manifest.json before giving this to anyone.
 const SR_HOST = /(^|\.)sports?recruits\.com$|^localhost$/i;
@@ -23,10 +30,11 @@ function render(s) {
 
   const target = s.target || Number($("target").value) || 1;
   $("bar").style.width = Math.min(100, ((s.total || 0) / target) * 100) + "%";
+  $("bar").classList.toggle("running", !!s.running);
 
   $("start").textContent = s.running ? "Stop" : "Start collecting";
   $("export").disabled = !s.total || s.running;
-  $("purge").style.visibility = s.total ? "block" : "hidden";
+  $("purge").classList.toggle("hidden", !s.total);
   $("details").classList.toggle("hidden", !(s.hasDetailTemplate && s.total && !s.running));
 
   if (s.note) setStatus(s.note, s.running ? "" : "ok");
@@ -47,7 +55,7 @@ async function init() {
   if (!SR_HOST.test(host)) {
     setStatus("Open a SportsRecruits search page first, then click here again.", "warn");
     $("start").disabled = true;
-    $("purge").style.visibility = "hidden";
+    $("purge").classList.add("hidden");
     return;
   }
 
@@ -155,5 +163,9 @@ function waitForDownload(id) {
     const timer = setTimeout(() => done(true), 20000);
   });
 }
+
+$("theme").addEventListener("click", () => {
+  setTheme(document.documentElement.dataset.theme !== "dark");
+});
 
 init();

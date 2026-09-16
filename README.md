@@ -4,10 +4,10 @@ A Chrome extension that pulls recruit contact info out of SportsRecruits search
 results and exports it to Excel. Built for a college coach who was copying
 emails off athlete profiles one at a time — the platform has 17,000+ of them.
 
-<img src="docs/popup.png" width="330" alt="Extension popup showing 847 recruits collected">
+<img src="docs/popup.png" width="560" alt="Extension popup in light and dark themes">
 
 Set a target, hit start, export. Everything runs locally and is deleted once the
-file is saved.
+file is saved. Follows your system light/dark setting, with a toggle to override it.
 
 ## The interesting problem
 

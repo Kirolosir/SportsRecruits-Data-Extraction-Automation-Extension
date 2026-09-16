@@ -3,47 +3,140 @@
 <head>
 <meta charset="utf-8">
 <style>
-  :root { --ink:#1a1523; --muted:#6b6577; --accent:#3f1f69; --line:#e6e2ec; --bg:#fff; --ok:#0f7b4f; --warn:#8a5a00; }
-  * { box-sizing: border-box; }
-  body { width: 340px; margin:0; padding:16px; font:13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
-  h1 { font-size:14px; margin:0 0 2px; letter-spacing:-0.01em; }
-  .sub { color:var(--muted); font-size:11px; margin:0 0 14px; }
+  /* light */
+  :root {
+    --bg:#f5f5f7; --card:#fff; --ink:#1d1d1f; --muted:#6e6e73; --line:#e3e0e8;
+    --accent:#3f1f69; --accent-hover:#33184f; --accent-active:#2a1440; --accent-soft:#efe9f6;
+    --ok:#1a7f4b; --warn:#966300; --danger:#c53a2e; --track-off:#d9d6dd;
+    --btn-shadow:0 2px 4px rgba(63,31,105,.2);
+    --btn-shadow-hover:0 3px 6px rgba(63,31,105,.25);
+    --knob-icon:#8a8790;
+  }
+  /* dark */
+  :root[data-theme="dark"] {
+    --bg:#000; --card:#1c1c1e; --ink:#f5f5f7; --muted:#98989d; --line:#38383a;
+    --accent:#8452c9; --accent-hover:#9563d9; --accent-active:#6f42ac; --accent-soft:#2a2330;
+    --ok:#30d158; --warn:#ffb340; --danger:#ff6961; --track-off:#39393d;
+    --btn-shadow:0 1px 0 rgba(255,255,255,.05) inset;
+    --btn-shadow-hover:0 1px 0 rgba(255,255,255,.05) inset;
+    --knob-icon:#8452c9;
+  }
 
-  .card { border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
-  .count { font-size:30px; font-weight:600; line-height:1; letter-spacing:-0.02em; }
-  .count small { font-size:13px; font-weight:400; color:var(--muted); letter-spacing:0; }
-  .detail { color:var(--muted); font-size:11px; margin-top:6px; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-  .bar { height:5px; background:var(--line); border-radius:3px; margin-top:10px; overflow:hidden; }
-  .bar > i { display:block; height:100%; width:0; background:var(--accent); border-radius:3px; transition:width .3s; }
+  body {
+    width:360px; margin:0; padding:20px; background:var(--bg); color:var(--ink);
+    font:13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    transition:background .2s, color .2s;
+  }
 
-  label { display:block; font-size:11px; color:var(--muted); margin-bottom:5px; }
-  input[type=number] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; }
-  input[type=number]:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+  .head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:16px; }
+  h1 { font-size:15px; font-weight:600; margin:0 0 2px; letter-spacing:-0.01em; }
+  .sub { color:var(--muted); font-size:11.5px; margin:0; max-width:230px; }
 
-  button { width:100%; padding:9px 12px; border-radius:7px; font-size:13px; font-family:inherit; font-weight:500; cursor:pointer; border:1px solid transparent; margin-top:8px; }
-  .primary { background:var(--accent); color:#fff; }
-  .primary:hover:not(:disabled) { background:#33184f; }
-  .secondary { background:#fff; color:var(--ink); border-color:var(--line); }
-  .secondary:hover:not(:disabled) { background:#faf9fc; }
-  button:disabled { opacity:.4; cursor:not-allowed; }
+  /* theme switch */
+  .toggle {
+    position:relative; width:46px; height:26px; border-radius:13px; border:none; flex-shrink:0;
+    background:var(--track-off); cursor:pointer; padding:0; margin-top:2px; display:block;
+    transition:all .16s cubic-bezier(.34,1.56,.64,1);
+  }
+  :root[data-theme="dark"] .toggle { background:var(--accent); }
+  .toggle:active { transform:scale(.94); }
+  .knob {
+    position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); color:var(--knob-icon);
+    display:flex; align-items:center; justify-content:center;
+    transition:all .16s cubic-bezier(.34,1.56,.64,1);
+  }
+  :root[data-theme="dark"] .knob { left:23px; }
+  :root[data-theme="dark"] .icon-sun,
+  :root:not([data-theme="dark"]) .icon-moon { display:none; }
 
-  .danger { background:none; border:none; color:var(--muted); font-size:11px; text-decoration:underline; width:auto; padding:4px 0; margin:10px auto 0; display:block; }
-  .danger:hover { color:#b3261e; }
+  .card {
+    border:1px solid var(--line); background:var(--card); border-radius:14px; padding:16px;
+    margin-bottom:14px; transition:background .2s, border-color .2s;
+  }
+  .count-row { display:flex; align-items:baseline; gap:4px; }
+  .count { font-size:32px; font-weight:700; line-height:1; letter-spacing:-0.02em; }
+  .count-unit { font-size:13px; color:var(--muted); }
+  .detail { color:var(--muted); font-size:11.5px; margin-top:7px; }
 
-  .status { font-size:11px; margin-top:10px; min-height:15px; color:var(--muted); }
+  .bar { height:5px; background:var(--line); border-radius:3px; margin-top:11px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0; background:var(--accent); border-radius:3px; transition:width .3s, background .2s; }
+  .bar > i.running { animation:sr-shimmer 1.1s ease-in-out infinite; }
+  @keyframes sr-shimmer { 0%{opacity:.55} 50%{opacity:1} 100%{opacity:.55} }
+  @keyframes sr-press { 0%{transform:scale(1)} 45%{transform:scale(.9) translateY(2px)} 100%{transform:scale(1)} }
+
+  label { display:block; font-size:11.5px; color:var(--muted); margin:14px 0 6px; }
+  input[type=number] {
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+    font-size:15px; font-family:inherit; background:var(--card); color:var(--ink);
+    outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  input[type=number]:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+  button.btn {
+    width:100%; padding:11px 14px; border-radius:12px; font-size:14px; font-weight:600;
+    font-family:inherit; letter-spacing:-0.01em; cursor:pointer; border:1px solid transparent;
+    margin-top:8px; will-change:transform;
+    transition:transform .08s ease-out, background .08s ease-out, box-shadow .08s ease-out;
+  }
+  .primary { background:var(--accent); color:#fff; box-shadow:var(--btn-shadow); }
+  .primary:hover:not(:disabled) { background:var(--accent-hover); transform:translateY(-1px); box-shadow:var(--btn-shadow-hover); }
+  .primary:active:not(:disabled) { background:var(--accent-active); transform:scale(.9) translateY(2px); box-shadow:inset 0 2px 5px rgba(0,0,0,.35); }
+  .secondary { background:var(--card); color:var(--ink); border-color:var(--line); }
+  .secondary:hover:not(:disabled) { background:var(--accent-soft); border-color:var(--accent); }
+  .secondary:active:not(:disabled) { transform:scale(.9) translateY(2px); background:var(--accent-soft); box-shadow:inset 0 2px 4px rgba(0,0,0,.1); }
+  button:disabled { opacity:.38; cursor:not-allowed; }
+
+  .danger {
+    background:none; border:none; color:var(--muted); font-size:11.5px; text-decoration:underline;
+    width:auto; padding:5px 0; margin:10px auto 0; display:block; cursor:pointer; font-family:inherit;
+    transition:color .16s;
+  }
+  .danger:hover { color:var(--danger); }
+
+  .status { font-size:11.5px; margin-top:11px; min-height:15px; color:var(--muted); transition:color .15s; }
   .status.ok { color:var(--ok); }
   .status.warn { color:var(--warn); }
-  .note { font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; margin-top:12px; }
-  .hidden { display:none; }
+
+  .note { font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:11px; margin:13px 0 0; }
+
+  .hidden { display:none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .bar > i.running { animation:none !important; transition:none !important; }
+  }
 </style>
+<script>
+  // runs before the body paints so a dark-theme popup doesn't flash white
+  try {
+    var saved = localStorage.getItem("sr_theme");
+    var dark = saved ? saved === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    if (dark) document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+</script>
 </head>
 <body>
-  <h1>SportsRecruits Export</h1>
-  <p class="sub">Collects recruits from the search results open in this tab.</p>
+  <div class="head">
+    <div>
+      <h1>SportsRecruits Export</h1>
+      <p class="sub">Collects recruits from the search results open in this tab.</p>
+    </div>
+    <button id="theme" class="toggle" aria-label="Toggle light or dark theme">
+      <span class="knob">
+        <svg class="icon-sun" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        <svg class="icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 14.9a8.6 8.6 0 1 1-9.6-13 9.4 9.4 0 0 0 2.6 11.9 9.4 9.4 0 0 0 7 1.1z"/></svg>
+      </span>
+    </button>
+  </div>
 
   <div class="card">
-    <div class="count"><span id="count">0</span><small> recruits</small></div>
+    <div class="count-row">
+      <span class="count" id="count">0</span>
+      <span class="count-unit">recruits</span>
+    </div>
     <div class="detail"><span id="withEmail">0</span> with an email &middot; <span id="withIg">0</span> with Instagram</div>
     <div class="bar"><i id="bar"></i></div>
   </div>
@@ -51,12 +144,12 @@
   <label for="target">How many recruits do you want?</label>
   <input type="number" id="target" min="1" max="20000" step="50" value="1000">
 
-  <button id="start" class="primary">Start collecting</button>
-  <button id="details" class="secondary hidden">Also pull profile details</button>
-  <button id="export" class="primary" disabled>Export to Excel</button>
+  <button id="start" class="btn primary">Start collecting</button>
+  <button id="details" class="btn secondary hidden">Also pull profile details</button>
+  <button id="export" class="btn primary" disabled>Export to Excel</button>
 
   <div class="status" id="status"></div>
-  <button id="purge" class="danger">Delete all collected data now</button>
+  <button id="purge" class="danger hidden">Delete all collected data now</button>
 
   <p class="note">Everything stays on this computer and is deleted automatically as soon as the file is saved.</p>
 
