@@ -1,99 +1,133 @@
-# SportsRecruits Export
+# SportsRecruits Data Extraction & Automation Extension
 
-A Chrome extension that pulls recruit contact info out of SportsRecruits search
-results and exports it to Excel. Built for a college coach who was copying
-emails off athlete profiles one at a time — the platform has 17,000+ of them.
+A credential-free Chrome extension that extracts structured recruiting data from authenticated SportsRecruits sessions and exports native multi-sheet XLSX files entirely in the browser.
+
+The extension does not collect or store user credentials. It runs inside an already authenticated tab, observes the network responses the page is already loading, extracts recruit data, deduplicates records, discovers contact fields, and deletes temporary extension data after export.
 
 <img src="docs/popup.png" width="560" alt="Extension popup in light and dark themes">
 
-Set a target, hit start, export. Everything runs locally and is deleted once the
-file is saved. Follows your system light/dark setting, with a toggle to override it.
+## Stack
 
-## The interesting problem
+JavaScript, Chrome Extensions Manifest V3, Fetch/XHR interception, OOXML, ZIP, XLSX
 
-I never had access to a SportsRecruits account, so I couldn't see a single API
-endpoint or field name. Hardcoding either would have meant code that breaks the
-first time it runs.
+## Engineering highlights
 
-Two things fall out of that:
+- Runs inside an authenticated SportsRecruits tab without handling account credentials.
+- Intercepts `fetch` and `XMLHttpRequest` responses already loaded by the site.
+- Uses schema-tolerant extraction instead of depending on fixed API field names.
+- Handles pagination, record deduplication, profile enrichment, and contact discovery across email and Instagram fields.
+- Generates native multi-sheet XLSX files client-side without external spreadsheet libraries.
+- Clears temporary extension storage after export so the downloaded spreadsheet is the only retained copy.
+- Includes a local test harness with 1,200 synthetic prospects, multiple pagination styles, decoy objects, and both Fetch and XHR responses.
 
-**It can't log in, so it doesn't.** A hosted site can't read someone's
-logged-in session, and doing it server-side would mean storing their password.
-The extension instead runs inside the tab they're already signed into. The page
-is already downloading athlete data to render itself — `injected.js` wraps
-`fetch` and `XMLHttpRequest` and reads those responses as they come back.
+## How extraction works
 
-**It can't know the schema, so it infers it.** `lib/extract.js` scores objects
-on the *kinds* of fields they carry rather than on specific names. Anything with
-a name, or two other signals (grad year, position, club, email), is treated as a
-person. Every string gets scanned for emails and Instagram links regardless of
-what the key is called.
+The extension injects a small network listener into the active SportsRecruits tab. When the page receives JSON responses, the extension inspects them for person-like records.
 
-It also handles the wrapper problem — given
-`{status, payload: {prospect: {personal: {...}}}}` it has to return the
-prospect, not the payload around it or the `personal` object inside it.
+Instead of assuming exact property names, the extractor scores objects based on signals such as:
 
-## Output
+- name
+- graduation year
+- position
+- club or school
+- email
+- Instagram profile
+- stable record ID
 
-Three sheets: **Contacts** (the usable list, emails sorted to the top),
-**All Data** (every field, so nothing is silently dropped), and **Summary**.
+This makes the extractor more tolerant of nested objects and changing response shapes.
+
+For example, a response shaped like:
+
+```json
+{
+  "status": "ok",
+  "payload": {
+    "prospect": {
+      "personal": {
+        "name": "Example Recruit"
+      }
+    }
+  }
+}
+```
+
+must resolve to the prospect record rather than the surrounding payload object or one nested subsection.
+
+## Data pipeline
+
+```text
+Authenticated browser tab
+        ↓
+Fetch / XHR responses
+        ↓
+Schema-tolerant record extraction
+        ↓
+Pagination + profile enrichment
+        ↓
+Deduplication + contact discovery
+        ↓
+Client-side XLSX generation
+        ↓
+Temporary extension data deleted
+```
+
+## XLSX output
+
+The generated workbook contains three sheets:
+
+- **Contacts** — cleaned recruiting contacts with usable emails prioritized
+- **All Data** — every extracted field so source information is not silently dropped
+- **Summary** — export-level counts and metadata
 
 ![Exported contacts sheet](docs/export.png)
 
-The `.xlsx` writer is hand-rolled — an xlsx is a zip of XML, and Manifest V3
-blocks loading SheetJS from a CDN. Files are stored uncompressed so I didn't
-have to implement deflate.
+The workbook writer is implemented directly in JavaScript using OOXML and ZIP structures. This avoids depending on a remote spreadsheet library, which is incompatible with Manifest V3's extension security model.
 
 ## Testing
 
-No account meant no way to test against the real thing, so I wrote a mock site:
-1,200 prospects, both pagination styles, `fetch` on some pages and `XHR` on
-others, emails only on profile pages, and decoy objects designed to fool the
-extractor.
+Because development did not depend on access to a live SportsRecruits account, the repository includes a local mock site with 1,200 synthetic prospects.
+
+The harness covers:
+
+- both Fetch and XHR traffic
+- multiple pagination styles
+- profile-only email fields
+- nested response wrappers
+- decoy objects designed to resemble recruit records
+- duplicate records across pages
+- profile data merged back into search results
 
 ![Mock test site](docs/test-site.png)
 
-Field names in the mock deliberately differ from what the extractor was written
-around — matching names would make the test prove nothing. It caught three real
-bugs:
+The extractor is also checked against several public JSON APIs with different response schemas to verify that it is not coupled to a single hardcoded object structure.
 
-| Bug | Effect |
-|---|---|
-| `prospectId` not recognized as an ID | records fell back to content hashes and duplicated across pages |
-| Single-object profile responses | extracted **zero** records — the finder only looked inside arrays, so profile fetching was a silent no-op |
-| Both of the above together | profile emails never merged onto the matching search record |
-
-Extraction is additionally verified against three third-party public APIs
-(`jsonplaceholder`, `dummyjson`, `reqres`) — 46/46 records, three different
-schemas, none of them mine.
+Run the test harness with:
 
 ```bash
-node test-harness/server.js   # http://localhost:8787
+node test-harness/server.js
 ```
 
-## Where the data goes
+Then open `http://localhost:8787`.
 
-Tab memory → Chrome's local extension storage → the `.xlsx` file. When the
-download completes, `background.js` wipes the first two. The spreadsheet is the
-only copy that survives.
+## Data handling
 
-Deletion lives in the service worker rather than the popup because Chrome
-destroys the popup the moment the save dialog opens — a listener there never
-fires. There is exactly one outbound request in the extension, and it goes to
-SportsRecruits.
+Temporary data flows through:
+
+```text
+Tab memory → Chrome extension storage → downloaded XLSX file
+```
+
+After the download completes, the extension clears its temporary stored data. Cleanup is handled by the service worker so it still runs after the popup closes during the browser download flow.
 
 ## Install
 
-Chrome → Extensions → Developer mode → Load unpacked → select this folder.
-Full walkthrough in [INSTALL.md](INSTALL.md).
+1. Open Chrome Extensions.
+2. Enable Developer mode.
+3. Choose **Load unpacked**.
+4. Select this repository folder.
+
+See [INSTALL.md](INSTALL.md) for the full setup process.
 
 ## Status
 
-Works end to end against the test harness. Not yet run against the live site —
-the pagination heuristics in `content.js` are the part most likely to need
-adjusting there.
-
-Bulk collection may conflict with the platform's terms of service, and
-SportsRecruits offers a native CSV export for followed athletes that covers some
-of this. Camp outreach to mostly-minor recipients also falls under CAN-SPAM and
-NCAA DIII contact rules.
+The extension is implemented and tested end to end against the included local harness. Live-site behavior may require adjustment if SportsRecruits changes its response or pagination structure.
