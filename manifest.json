@@ -1,0 +1,69 @@
+{
+  "manifest_version": 3,
+  "name": "SportsRecruits Export",
+  "version": "1.0.0",
+  "description": "Collects recruit contact info from SportsRecruits search results and exports it to Excel. All data stays on this computer.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "downloads",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.sportsrecruits.com/*",
+    "https://sportsrecruits.com/*",
+    "https://*.sportrecruits.com/*",
+    "https://sportrecruits.com/*",
+    "http://localhost:8787/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SportsRecruits Export",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.sportsrecruits.com/*",
+        "https://sportsrecruits.com/*",
+        "https://*.sportrecruits.com/*",
+        "https://sportrecruits.com/*",
+        "http://localhost:8787/*"
+      ],
+      "js": [
+        "injected.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://*.sportsrecruits.com/*",
+        "https://sportsrecruits.com/*",
+        "https://*.sportrecruits.com/*",
+        "https://sportrecruits.com/*",
+        "http://localhost:8787/*"
+      ],
+      "js": [
+        "lib/extract.js",
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": true
+    }
+  ]
+}

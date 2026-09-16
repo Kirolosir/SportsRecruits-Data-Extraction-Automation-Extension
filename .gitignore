@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Exported recruit data must never be committed
+*.xlsx
+*.csv
+out/

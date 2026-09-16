@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --ink:#1a1523; --muted:#6b6577; --accent:#3f1f69; --line:#e6e2ec; --bg:#fff; --ok:#0f7b4f; --warn:#8a5a00; }
+  * { box-sizing: border-box; }
+  body { width: 340px; margin:0; padding:16px; font:13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  h1 { font-size:14px; margin:0 0 2px; letter-spacing:-0.01em; }
+  .sub { color:var(--muted); font-size:11px; margin:0 0 14px; }
+
+  .card { border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
+  .count { font-size:30px; font-weight:600; line-height:1; letter-spacing:-0.02em; }
+  .count small { font-size:13px; font-weight:400; color:var(--muted); letter-spacing:0; }
+  .detail { color:var(--muted); font-size:11px; margin-top:6px; }
+
+  .bar { height:5px; background:var(--line); border-radius:3px; margin-top:10px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0; background:var(--accent); border-radius:3px; transition:width .3s; }
+
+  label { display:block; font-size:11px; color:var(--muted); margin-bottom:5px; }
+  input[type=number] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; }
+  input[type=number]:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+
+  button { width:100%; padding:9px 12px; border-radius:7px; font-size:13px; font-family:inherit; font-weight:500; cursor:pointer; border:1px solid transparent; margin-top:8px; }
+  .primary { background:var(--accent); color:#fff; }
+  .primary:hover:not(:disabled) { background:#33184f; }
+  .secondary { background:#fff; color:var(--ink); border-color:var(--line); }
+  .secondary:hover:not(:disabled) { background:#faf9fc; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+
+  .danger { background:none; border:none; color:var(--muted); font-size:11px; text-decoration:underline; width:auto; padding:4px 0; margin:10px auto 0; display:block; }
+  .danger:hover { color:#b3261e; }
+
+  .status { font-size:11px; margin-top:10px; min-height:15px; color:var(--muted); }
+  .status.ok { color:var(--ok); }
+  .status.warn { color:var(--warn); }
+  .note { font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; margin-top:12px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <h1>SportsRecruits Export</h1>
+  <p class="sub">Collects recruits from the search results open in this tab.</p>
+
+  <div class="card">
+    <div class="count"><span id="count">0</span><small> recruits</small></div>
+    <div class="detail"><span id="withEmail">0</span> with an email &middot; <span id="withIg">0</span> with Instagram</div>
+    <div class="bar"><i id="bar"></i></div>
+  </div>
+
+  <label for="target">How many recruits do you want?</label>
+  <input type="number" id="target" min="1" max="20000" step="50" value="1000">
+
+  <button id="start" class="primary">Start collecting</button>
+  <button id="details" class="secondary hidden">Also pull profile details</button>
+  <button id="export" class="primary" disabled>Export to Excel</button>
+
+  <div class="status" id="status"></div>
+  <button id="purge" class="danger">Delete all collected data now</button>
+
+  <p class="note">Everything stays on this computer and is deleted automatically as soon as the file is saved.</p>
+
+  <script src="lib/extract.js"></script>
+  <script src="lib/sheet.js"></script>
+  <script src="lib/xlsx.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
