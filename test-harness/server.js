@@ -19,7 +19,10 @@ const PAGE_HTML = `<!doctype html>
 <style>
  body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f7f6f9;color:#1a1523}
  header{background:#3f1f69;color:#fff;padding:14px 20px;font-weight:600}
- .wrap{max-width:760px;margin:0 auto;padding:20px}
+ .wrap{max-width:960px;margin:0 auto;padding:20px;display:flex;gap:20px}
+ .sidebar{width:200px;background:#fff;border:1px solid #e6e2ec;border-radius:8px;padding:12px;align-self:flex-start}
+ .sidebar label{display:block;margin-bottom:6px;cursor:pointer}
+ .main-content{flex:1}
  .bar{background:#fff;border:1px solid #e6e2ec;border-radius:8px;padding:12px;margin-bottom:14px;color:#6b6577}
  #results{display:flex;flex-direction:column;gap:8px}
  .card{background:#fff;border:1px solid #e6e2ec;border-radius:8px;padding:12px 14px}
@@ -33,10 +36,20 @@ const PAGE_HTML = `<!doctype html>
 <body>
 <header>Mock Prospect Search</header>
 <div class="wrap">
-  <div class="bar">Showing prospects — <span id="count">0</span> of ${TOTAL} loaded</div>
-  <div id="results"></div>
-  <button id="more">Load more results</button>
-  <div id="done">No more results.</div>
+  <aside class="sidebar">
+    <h3>Filters</h3>
+    <label><input type="checkbox" id="uncommitted"> Uncommitted</label>
+    <div style="margin-top: 10px;">Graduation Year</div>
+    <label><input type="checkbox" value="2026"> 2026</label>
+    <label><input type="checkbox" value="2027"> 2027</label>
+    <label><input type="checkbox" value="2028"> 2028</label>
+  </aside>
+  <div class="main-content">
+    <div class="bar">Showing prospects — <span id="count">0</span> of ${TOTAL} loaded. Decoy year: 2027.</div>
+    <div id="results"></div>
+    <button id="more">Load more results</button>
+    <div id="done">No more results.</div>
+  </div>
 </div>
 <script>
 let page = 0;
@@ -94,26 +107,33 @@ const server = http.createServer((req, res) => {
   }
 
   if (url.pathname === "/api/search") {
-    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
-    const start = (page - 1) * PAGE_SIZE;
-    const items = [];
-    for (let i = start; i < Math.min(start + PAGE_SIZE, TOTAL); i++) items.push(makeProspect(i));
-    // wrapped in junk like a real response would be, the nav array and the
-    // support email are both there to try and trip up the extractor
-    return json(res, {
-      status: "ok",
-      navigation: [{ label: "Home", href: "/" }, { label: "Search", href: "/search" }],
-      pagination: { page, pageSize: PAGE_SIZE, total: TOTAL, hasMore: start + PAGE_SIZE < TOTAL },
-      payload: { searchResults: { items } },
-      support: { email: "help@sportsrecruits.com" },
-    });
+    setTimeout(() => {
+      const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+      const start = (page - 1) * PAGE_SIZE;
+      const items = [];
+      for (let i = start; i < Math.min(start + PAGE_SIZE, TOTAL); i++) items.push(makeProspect(i));
+      return json(res, {
+        status: "ok",
+        navigation: [{ label: "Home", href: "/" }, { label: "Search", href: "/search" }],
+        pagination: { page, pageSize: PAGE_SIZE, total: TOTAL, hasMore: start + PAGE_SIZE < TOTAL },
+        payload: { searchResults: { items } },
+        support: { email: "help@sportsrecruits.com" },
+      });
+    }, 500); // 500ms delay to simulate real network
+    return;
   }
 
   const detail = url.pathname.match(/^\/api\/prospect\/(\d+)$/);
   if (detail) {
+    if (detail[1] === "100012") {
+      res.writeHead(500); return res.end("Internal Server Error"); // test failed request
+    }
     const n = parseInt(detail[1], 10) - 100000;
     if (n < 0 || n >= TOTAL) { res.writeHead(404); return res.end("{}"); }
-    return json(res, { status: "ok", payload: { prospect: makeDetail(n) } });
+    setTimeout(() => {
+       return json(res, { status: "ok", payload: { prospect: makeDetail(n) } });
+    }, 300);
+    return;
   }
 
   const profile = url.pathname.match(/^\/prospect\/(\d+)$/);

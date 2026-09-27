@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>SportsRecruits Export test instructions</title>
+<body style="font:16px system-ui;max-width:700px;margin:40px auto">
+<h1>Extension tests</h1>
+<p>The old private-state/filter automation test was superseded. It did not exercise the installed extension reliably.</p>
+<p>Run <code>node test-harness/test-unit.js</code> for message-level regression checks.</p>
+<p>Run <code>node test-harness/server.js</code>, load the extension in Chrome, and open
+<a href="http://localhost:8787">the mock search site</a> for browser testing.</p>
+<p>The mock does not verify live SportsRecruits DOM, embedding policy or contact payloads. See <code>docs/LIVE_TEST.md</code>.</p>
+</body></html>
